@@ -1,24 +1,66 @@
 #Python
 from typing import Optional
 from datetime import datetime
-from uuid import UUID
+from uuid import UUID, uuid4
 #sqlmodel
 from sqlmodel import SQLModel, Field
 #Pydantic
-from pydantic import EmailStr
+from pydantic import EmailStr, SecretStr
 
 class UserBase(SQLModel):
     name : str = Field(min_length=3, max_length=50)
-    email : EmailStr = Field(unique=True, min_length=3, max_length=50)
-    userTelegram: str = Field(unique=True, min_length=3, max_length=50)
-    city : str = Field(min_length=3, max_length=50)
-    country : str = Field(min_length=3, max_length=50)
+    email : EmailStr = Field(unique=True)
+    # userTelegram: str = Field(unique=True, min_length=3, max_length=50)
+    # city : str = Field(min_length=3, max_length=50)
+    # country : str = Field(min_length=3, max_length=50)
 
-class UserLogin(UserBase):
+class UserLogin(SQLModel):
+    email : EmailStr = Field(unique=True)
     password: str = Field(min_length=8, max_length=50)
 
+class UserNew(UserBase):
+    password: SecretStr = Field(min_length=8, max_length=50)
+    class Config:
+        schema_extra = {
+            'example': {
+                'name'      : 'Martin Criado',
+                'email'     : 'user@example.com',
+                'password'  : 'ThisIsMyPassword'
+            }
+        }
 
 class User(UserBase, table=True):
-    user_id : UUID = Field(primary_key=True)
-    id: Optional[int] = Field(default=None)
-    initDate : Optional[datetime] = None
+    user_id : UUID = Field(default_factory=uuid4,
+                           primary_key=True,
+                           index=True,
+                           nullable=False)
+    initDate : datetime = Field(default_factory=datetime.now)
+    pass_hash : str
+
+class UserFB(UserBase):
+    user_id : UUID
+    name : str
+    email : EmailStr
+
+class UserCreate(UserBase):
+    class Config:
+        schema_extra = {
+            'example': {
+                'name' : 'Nombre',
+                'email' : 'user@example.com',
+                'city' : 'Ciudad'
+            }
+        }
+
+class UserUpdate(SQLModel):
+    name  : Optional[str] = None 
+    email : Optional[str] = None 
+    city  : Optional[str] = None
+    class Config:
+        schema_extra = {
+            'example': {
+                'name' : 'Nombre',
+                'email' : 'user@example.com',
+                'city' : 'Ciudad'
+            }
+        }
