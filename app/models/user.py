@@ -1,5 +1,5 @@
 #Python
-from typing import Optional
+from typing import Any, Dict, Optional, Tuple
 from datetime import datetime
 from uuid import UUID, uuid4
 #sqlmodel
@@ -16,7 +16,8 @@ class UserBase(SQLModel):
 
 class UserLogin(SQLModel):
     email : EmailStr = Field(unique=True)
-    password: str = Field(min_length=8, max_length=50)
+    password: SecretStr = Field(min_length=8, max_length=50)
+    # password: str = Field(min_length=8, max_length=50)
 
 class UserNew(UserBase):
     password: SecretStr = Field(min_length=8, max_length=50)
@@ -39,8 +40,14 @@ class User(UserBase, table=True):
 
 class UserFB(UserBase):
     user_id : UUID
-    name : str
-    email : EmailStr
+    class Config:
+        schema_extra = {
+            'example': {
+                'name'      : 'Name of User',
+                'email'     : 'email of User',
+                'user_id'   : 'id of User'
+            }
+        }
 
 class UserCreate(UserBase):
     class Config:
