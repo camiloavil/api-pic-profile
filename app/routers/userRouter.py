@@ -2,16 +2,44 @@
 from fastapi import APIRouter, Depends, HTTPException, status
 from fastapi import Body
 from fastapi.responses import JSONResponse
+from fastapi.security import OAuth2PasswordBearer
 #SQLModel
 from sqlmodel import Session
+from sqlalchemy.exc import IntegrityError
 # APP
 from app.models.user import User, UserNew, UserLogin, UserFB
 from app.DB.db import get_session
+# passlib
+from passlib.context import CryptContext
 # Python
-import bcrypt
-from sqlalchemy.exc import IntegrityError
+from typing import Annotated
+
+pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
+oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")
 
 users_router = APIRouter()
+
+def verify_password(plain_password: str, hashed_password: str):
+    return pwd_context.verify(plain_password.encode('utf-8'), hashed_password.encode('utf-8'))
+
+
+def get_password_hash(password: str):
+    return pwd_context.hash(password.encode('utf-8'))
+
+
+def fake_decode_token(token):
+    print (f'fake_decode_token: {token}')
+    return User(username=token + "fakedecoded", email="john@example.com")
+
+async def get_current_user(token: Annotated[str, Depends(oauth2_scheme)]):
+    user = fake_decode_token(token)
+    return user
+
+@users_router.get(path="/myuser/",
+                  tags=["Trys"])
+async def read_items(current_user: Annotated[User, Depends(get_current_user)]):
+    print(str(current_user))
+    return current_user
 
 @users_router.get(path="/users", 
                  response_model=list[UserFB], 
@@ -20,7 +48,7 @@ def get_users(session: Session = Depends(get_session)):
     print("get_users")
     all_users = session.query(User).all()
     print(all_users)
-    all_users = [UserFB(name=user.name, email=user.email, user_id=user.user_id) for user in all_users]
+    all_users = [UserFB(**user.dict()) for user in all_users]
     print(all_users)
     
     return all_users
@@ -31,9 +59,9 @@ def get_users(session: Session = Depends(get_session)):
                   status_code=status.HTTP_201_CREATED)
 def create_user(user: UserNew = Body(...),
                 session: Session = Depends(get_session)):
-    salt = bcrypt.gensalt()
-    hashed_password = bcrypt.hashpw(user.password.get_secret_value().encode('utf-8'), salt)
-    new_user = User(name=user.name, email=user.email, pass_hash=hashed_password.decode('utf-8'))
+    user_dict = user.dict()
+    user_dict.update({"pass_hash": get_password_hash(user.password.get_secret_value())})
+    new_user = User(**user_dict)
     
     try:
         user_db = User.from_orm(new_user)
@@ -56,11 +84,14 @@ def create_user(user: UserNew = Body(...),
 def login(user: UserLogin = Body(...),
           session: Session = Depends(get_session)):
     user_db = session.query(User).filter(User.email == user.email).first()
+    
     if user_db is None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found")
-    result = bcrypt.checkpw(user.password.get_secret_value().encode('utf-8'), user_db.pass_hash.encode('utf-8'))
-    if result:
-        return UserFB(user_id=user_db.user_id, name=user_db.name, email=user_db.email)
-        # return JSONResponse(status_code=status.HTTP_200_OK,content={'message' : 'Login Success'})
-    else:
-        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid Credentials")
+    
+    if not verify_password(user.password.get_secret_value(), user_db.pass_hash):
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid authentication credentials",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
+    return UserFB(**user_db.dict())
