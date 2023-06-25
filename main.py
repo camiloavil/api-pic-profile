@@ -3,12 +3,14 @@ from fastapi import FastAPI
 from fastapi.responses import HTMLResponse
 #APP
 from app.routers.userRouter import users_router
+from app.security.userschema import secure_user
 from app.DB.db import create_db_table
 
 app = FastAPI()
 app.title = "Pic Profile Maker"
 app.version = "0.1.0"
 
+app.include_router(secure_user)
 app.include_router(users_router)
 
 @app.on_event('startup')

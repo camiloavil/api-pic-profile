@@ -14,11 +14,6 @@ class UserBase(SQLModel):
     # city : str = Field(min_length=3, max_length=50)
     # country : str = Field(min_length=3, max_length=50)
 
-class UserLogin(SQLModel):
-    email : EmailStr = Field(unique=True)
-    password: SecretStr = Field(min_length=8, max_length=50)
-    # password: str = Field(min_length=8, max_length=50)
-
 class UserNew(UserBase):
     password: SecretStr = Field(min_length=8, max_length=50)
     class Config:
