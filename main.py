@@ -10,8 +10,8 @@ app = FastAPI()
 app.title = "Pic Profile Maker"
 app.version = "0.1.0"
 
-app.include_router(secure_user)
 app.include_router(users_router)
+app.include_router(secure_user)
 
 @app.on_event('startup')
 def on_startup():

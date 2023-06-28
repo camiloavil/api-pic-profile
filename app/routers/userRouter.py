@@ -16,7 +16,7 @@ users_router = APIRouter()
 
 @users_router.get(path="/myuser/",
                   response_model=UserFB,
-                  tags=["Trys"])
+                  tags=["Users"])
 async def info_User(current_user: Annotated[User, Depends(get_current_user)]):
     """
     Get information about the current user.
@@ -25,10 +25,10 @@ async def info_User(current_user: Annotated[User, Depends(get_current_user)]):
     """
     return UserFB(**current_user.dict())
 
-@users_router.get(path="/users", 
+@users_router.get(path="/allusers", 
                  response_model=list[UserFB], 
                  tags=["Users"])
-def get_users(session: Session = Depends(get_session)):
+def get_allusers(session: Session = Depends(get_session)):
     all_users = session.query(User).all()
     all_users = [UserFB(**user.dict()) for user in all_users]
     
@@ -58,9 +58,4 @@ def create_user(user: UserNew = Body(...),
     return UserFB(user_id=new_user.user_id, name=user.name, email=user.email)
     # return JSONResponse(status_code=status.HTTP_201_CREATED,content={'message' : 'User added', 'id' : user_db.id, 'username' : user_db.name })
 
-@users_router.get(path="/users/me/", 
-                  response_model=UserFB,
-                  tags=["Users"])
-async def read_users_me(current_user: Annotated[User, Depends(get_current_user)]):
-    return current_user
 
