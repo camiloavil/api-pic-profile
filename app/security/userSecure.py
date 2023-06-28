@@ -20,7 +20,7 @@ URL_USER_LOGIN = "userlogin"
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 oauth2_User_scheme = OAuth2PasswordBearer(tokenUrl=URL_USER_LOGIN)
 
-secure_user = APIRouter()
+router = APIRouter()
 
 
 def verify_password(plain_password: str, hashed_password: str):
@@ -96,7 +96,7 @@ async def get_current_user(token: Annotated[str, Depends(oauth2_User_scheme)]):
     return user
 
 
-@secure_user.post(path="/"+URL_USER_LOGIN,tags=["Users"])
+@router.post(path="/"+URL_USER_LOGIN,tags=["Users"])
 async def login(form_data: Annotated[OAuth2PasswordRequestForm, Depends()]):
     """
     Authenticates a user by checking the validity of their provided credentials 
