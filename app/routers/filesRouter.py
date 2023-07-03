@@ -2,7 +2,7 @@ from fastapi import APIRouter, status, File, UploadFile
 
 router = APIRouter()
 
-@router.post(path='/uploadFile/',
+@router.post('/uploadFile', tags=['files'], 
                    #response_model=ResponseModel, 
                    status_code=status.HTTP_201_CREATED)
 async def upload_file(file: UploadFile = File(...)):

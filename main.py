@@ -1,25 +1,28 @@
-#FastAPI
+# FastAPI
 from fastapi import FastAPI
 from fastapi.responses import HTMLResponse
-#APP
-from app.routers import userRouter, adminuserRouter, files_router
-from app.security.userSecure import router as secure_user
+# APP
+from app.routers import filesRouter, usersRouter, adminRouter
+from app.security import secureuser
 from app.DB.db import create_db_table
 
 app = FastAPI()
 app.title = "Pic Profile Maker"
 app.version = "0.1.0"
 
-app.include_router(userRouter.router,
-                   prefix="/users",
-                   tags=["Users"])
-app.include_router(adminuserRouter.router,
-                   prefix="/admin",
-                   tags=["Admin"])
-app.include_router(files_router.router,
-                   prefix="/files",
-                   tags=["Files"])
-app.include_router(secure_user)
+
+app.include_router(usersRouter.router, 
+                   prefix='/users',
+                   tags=['Users'])
+app.include_router(adminRouter.router,
+                   prefix='/admin',
+                   tags=['Admin'])
+app.include_router(secureuser.router)
+app.include_router(filesRouter.router)   
+
+# app.include_router(files_router.router,
+#                    prefix="/files",
+                #    tags=["Files"])
 
 @app.on_event('startup')
 def on_startup():

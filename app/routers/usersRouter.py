@@ -11,7 +11,7 @@ from pydantic import SecretStr
 # APP
 from app.models.user import User, UserCreate, UserUpdate, UserFB
 from app.DB.db import get_session
-from app.security.userSecure import verify_password, get_password_hash, get_current_user
+from app.security.secureuser import verify_password, get_password_hash, get_current_user
 
 router = APIRouter()
 
@@ -40,7 +40,7 @@ def create_user(user: UserCreate = Body(),
         session.add(user_db)
         session.commit()
         session.refresh(user_db)
-        print(str(user_db))
+        # print(str(user_db))
     except IntegrityError:
         raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="User already exists")
     except Exception as e:
@@ -50,7 +50,8 @@ def create_user(user: UserCreate = Body(),
 
 @router.get(path="/myuser",
             response_model=UserFB,
-            status_code=status.HTTP_200_OK)
+            status_code=status.HTTP_200_OK
+            )
 async def info_User(current_user: Annotated[User, Depends(get_current_user)]):
     """
     Get information about the current user.
@@ -79,7 +80,7 @@ def update_user(current_user: Annotated[User, Depends(get_current_user)],
     newData_dict = newData.dict(exclude_unset=True)
     user_db = session.get(User,current_user.user_id)
     for key, value in newData_dict.items():
-        print(f'key:{key} value:{value}')
+        # print(f'key:{key} value:{value}')
         setattr(user_db,key,value)
     session.add(user_db)
     session.commit()
@@ -87,9 +88,9 @@ def update_user(current_user: Annotated[User, Depends(get_current_user)],
     return UserFB(**user_db.dict())
     return JSONResponse(content={'message':f'User id:{id} updated correctly'},status_code=status.HTTP_200_OK)
 
-@router.delete(path='/myuser', 
-                     response_model=dict, 
-                     status_code=status.HTTP_200_OK)
+@router.delete(path='/myuser',
+               response_model=dict,
+               status_code=status.HTTP_200_OK)
 def disable_user(current_user: Annotated[User, Depends(get_current_user)],
                 session: Session = Depends(get_session)) -> dict:
     """
@@ -108,8 +109,8 @@ def disable_user(current_user: Annotated[User, Depends(get_current_user)],
     return JSONResponse(content={'message':f'User id:{str(current_user.user_id)} disabled'},status_code=status.HTTP_200_OK)
 
 @router.put(path='/myuser/changepassword', 
-                  response_model= dict, 
-                  status_code=status.HTTP_200_OK)
+            response_model= dict,
+            status_code=status.HTTP_200_OK)
 def update_password_user(current_user: Annotated[User, Depends(get_current_user)],
                          actual_password: SecretStr = Form(min_length=8, max_length=35),
                          new_password: SecretStr = Form(min_length=8, max_length=35),
@@ -140,3 +141,4 @@ def update_password_user(current_user: Annotated[User, Depends(get_current_user)
         except IntegrityError:
             raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="There is an error updating the password")
     raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Incorrect actual password")
+

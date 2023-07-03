@@ -11,12 +11,13 @@ from typing import List
 from uuid import UUID
 # APP
 from app.models.user import User, UserFB
-from app.DB.db import get_session, get_userDB_by_email
-from app.security.userSecure import get_current_user
+from app.DB.db import get_session
+from app.DB.querys import get_userDB_by_email
+from app.security.secureuser import get_current_user
 
 router = APIRouter()
 
-@router.get(path='/allusers',
+@router.get(path='/allusers', 
             response_model= List[UserFB], 
             status_code=status.HTTP_200_OK
             )
@@ -47,12 +48,13 @@ def get_users(current_user: Annotated[User, Depends(get_current_user)],
 
 
 @router.get(path='/getuser/email/{email}', 
-                      response_model=UserFB, 
-                      status_code=status.HTTP_200_OK)
+            response_model=UserFB, 
+            status_code=status.HTTP_200_OK
+            )
 def getUserbyEmail(current_user: Annotated[User, Depends(get_current_user)],
-             email: EmailStr = Path(description='e-mail of the user to get', 
-                                    example='user@example.com'), 
-             session: Session = Depends(get_session)) -> User:
+                   email: EmailStr = Path(description='e-mail of the user to get', 
+                                          example='user@example.com'), 
+                    session: Session = Depends(get_session)) -> User:
     """
     Retrieves a user from the database based on their email address.
     
@@ -73,7 +75,7 @@ def getUserbyEmail(current_user: Annotated[User, Depends(get_current_user)],
                             detail="User Unauthorized")
 
     print(f'User id:{email}')
-    user = get_userDB_by_email(email)
+    user = get_userDB_by_email(email,session=session)
     if user is not None:
         return UserFB(**user.dict())
     else:
@@ -82,11 +84,11 @@ def getUserbyEmail(current_user: Annotated[User, Depends(get_current_user)],
 
 
 @router.get(path='/getuser/{uuid}', 
-                      response_model=UserFB, 
-                      status_code=status.HTTP_200_OK)
+            response_model=UserFB, 
+            status_code=status.HTTP_200_OK)
 def getUserbyUUID(current_user: Annotated[User, Depends(get_current_user)],
-             uuid: UUID = Path(description='UUID of the user to get'), 
-             session: Session = Depends(get_session)) -> User:
+                  uuid: UUID = Path(description='UUID of the user to get'), 
+                  session: Session = Depends(get_session)) -> User:
     """
     Retrieves a user from the database by UUID.
 
