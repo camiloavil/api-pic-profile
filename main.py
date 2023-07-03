@@ -2,7 +2,7 @@
 from fastapi import FastAPI
 from fastapi.responses import HTMLResponse
 # APP
-from app.routers import filesRouter, usersRouter, adminRouter
+from app.routers import imagesRouter, usersRouter, adminRouter
 from app.security import secureuser
 from app.DB.db import create_db_table
 
@@ -14,15 +14,13 @@ app.version = "0.1.0"
 app.include_router(usersRouter.router, 
                    prefix='/users',
                    tags=['Users'])
+app.include_router(imagesRouter.router,
+                   prefix='/pictures',
+                   tags=['Pictures'])   
 app.include_router(adminRouter.router,
                    prefix='/admin',
                    tags=['Admin'])
 app.include_router(secureuser.router)
-app.include_router(filesRouter.router)   
-
-# app.include_router(files_router.router,
-#                    prefix="/files",
-                #    tags=["Files"])
 
 @app.on_event('startup')
 def on_startup():
