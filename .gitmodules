@@ -1,0 +1,3 @@
+[submodule "ProfilePicMaker"]
+	path = ProfilePicMaker
+	url = https://github.com/camiloavil/ProfilePicMaker
