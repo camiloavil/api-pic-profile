@@ -52,7 +52,7 @@ async def upload_pic(pic_file: UploadFile = File(...)):
                     face.setBorder(BorderColor)
                 face.setBlur(30)
                 # face.show()
-                face.save()
+                face.save(tol= 5)       # save the pic on a temp file during 5 sec
                 return FileResponse(face.get_path())
             # The temporary file will be deleted automatically when closed
 
