@@ -1,6 +1,11 @@
 # FastAPI
 from fastapi import APIRouter, status, HTTPException, UploadFile
 from fastapi import File
+# ProfilePicMaker
+from ProfilePicMaker.app.models.pictures import BigPic
+# from app.models.pictures import BigPic
+# Python
+import tempfile
 
 router = APIRouter()
 
@@ -20,8 +25,10 @@ async def upload_pic(pic_file: UploadFile = File(...)):
             status_code=status.HTTP_413_REQUEST_ENTITY_TOO_LARGE,
             detail="File size is too large",
         )
+    temp_dir = tempfile.TemporaryDirectory()
     
     return {"filename": pic_file.filename,
             "format": pic_file.content_type,
             "size": pic_file.size,
-            "sizeInBytes": round(len(pic_file.file.read())/1024,ndigits=2),}
+            "sizeInBytes": round(len(pic_file.file.read())/1024,ndigits=2),
+            "temp_dir": str(temp_dir),}

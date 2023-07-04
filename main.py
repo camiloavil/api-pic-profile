@@ -5,6 +5,19 @@ from fastapi.responses import HTMLResponse
 from app.routers import imagesRouter, usersRouter, adminRouter
 from app.security import secureuser
 from app.DB.db import create_db_table
+# Python
+import sys
+import os
+# sys.path.append("ProfilePicMaker")
+
+# submod_path = os.path.abspath("ProfilePicMaker")
+# # Agregar la ruta del submódulo al PYTHONPATH
+# sys.path.append(submod_path)
+
+submodule_name = 'ProfilePicMaker'
+(parent_folder_path, current_dir) = os.path.split(os.path.dirname(__file__))
+sys.path.append(os.path.join(parent_folder_path, submodule_name))
+
 
 app = FastAPI()
 app.title = "Pic Profile Maker"
