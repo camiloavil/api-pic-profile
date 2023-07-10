@@ -1,5 +1,4 @@
 # SQLModel
-# from sqlmodel import SQLModel as models
 from . import MyModels
 from sqlmodel import Field
 # Python

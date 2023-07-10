@@ -8,12 +8,17 @@ from ProfilePicMaker.app.models.colors import Color, ColorExamples
 # APP
 from app.models.user import User
 from app.models.picture import Picture
+from app.dependencies.service import MakePicture
 from app.security.secureuser import get_current_user
 # Python
 from typing import Annotated, Union
 import tempfile
 
 router = APIRouter()
+
+LIMIT_SIZE_FREE = 3 # MB
+LIMIT_SIZE_USER = 15 # MB
+
 
 @router.post('/example',
     response_class=FileResponse, 
@@ -29,47 +34,39 @@ async def example(pic_file: UploadFile = File(...),
                     border: Annotated[Union[ColorExamples, None], 
                                       Query(description='Border Color to use, Default = None')] = None
                      ):
-    # if pic_file.content_type not in ["image/jpeg", "image/png"]:
+    """
+    Create a picture Example with specified colors and border.
+
+    Parameters:
+        pic_file (UploadFile): The picture file to process.
+        index (int): Which face in the picture will be used. Default is 1. Must be between 1 and 10.
+        colorA (ColorExamples): First color to use. Default is Black.
+        colorB (ColorExamples): Last color to use. Default is Black.
+        border (Union[ColorExamples, None]): Border color to use. Default is None.
+
+    Returns:
+        FileResponse: The processed picture file resized.
+    """
     if pic_file.content_type not in ("image/jpeg",):
         raise HTTPException(
             status_code=status.HTTP_415_UNSUPPORTED_MEDIA_TYPE,
             detail="Unsupported content type. Supported content types are 'image/jpeg'",
             )
-    if pic_file.size > 1024 * 1024 * 3:     # 3MB
+    if pic_file.size > 1024 * 1024 * LIMIT_SIZE_FREE:     # 3MB
         raise HTTPException(
             status_code=status.HTTP_413_REQUEST_ENTITY_TOO_LARGE,
             detail="File size is too large",
         )
-    # temp_dir = tempfile.TemporaryDirectory()
-    # colorborder: Annotated[str, typer.Option(help="Color to use for the border, Default = None")] = None
     Acolor = Color.get_color_rgb(colorA.value)
     Bcolor = Color.get_color_rgb(colorB.value)
     BorderColor = None if border is None else Color.get_color_rgb(border.value)
-    # print(str(BorderColor))
     try:
-        # Create a temporary file
-        with tempfile.NamedTemporaryFile(delete=True, suffix=".jpg") as temp_file:
-           # Save the uploaded file to the temporary file
-            with open(temp_file.name, "wb") as f:
-                f.write(await pic_file.read())
-            # print(temp_file.name)
-            faces = BigPic(temp_file.name).get_faces()
-            if(len(faces) == 0):
-                raise HTTPException(
-                    status_code=status.HTTP_409_CONFLICT,
-                    detail= "No Faces detected in the picture 'image/jpeg'",
-                    )
-            # print(len(faces))
-            index -= 1
-            faces[index].resize(300)
-            faces[index].removeBG()
-            faces[index].addBG(Acolor,Bcolor)
-            faces[index].set_contour()
-            if BorderColor is not None:
-                faces[index].setBorder(BorderColor)
-            faces[index].setBlur(30)
-            faces[index].save(tol= 5)       # save the pic on a temp file during 5 sec
-            return FileResponse(faces[index].get_path())
+        pic_path = await MakePicture.make_temp_picture(pic_file, 
+                                                       Acolor, 
+                                                       Bcolor, 
+                                                       BorderColor, 
+                                                       (index-1))
+        return FileResponse(pic_path)
     except Exception as e:
         print(str(e))
         raise HTTPException(
@@ -77,11 +74,11 @@ async def example(pic_file: UploadFile = File(...),
             detail= "there was an error processing your request. Try again later",
             )
 
-    return {"filename": pic_file.filename,
-            "format": pic_file.content_type,
-            "size": pic_file.size,
-            "sizeInBytes": round(len(pic_file.file.read())/1024,ndigits=2),
-            "temp_file": str(temp_file.name),}
+    # return {"filename": pic_file.filename,
+    #         "format": pic_file.content_type,
+    #         "size": pic_file.size,
+    #         "sizeInBytes": round(len(pic_file.file.read())/1024,ndigits=2),
+    #         "temp_file": str(temp_file.name),}
 
 
 @router.post('/mypicture',
