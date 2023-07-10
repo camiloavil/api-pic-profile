@@ -1,5 +1,5 @@
 # APP
-from app.models.user import SQLModel
+from app.models import MyModels
 # SQLModel
 from sqlmodel import Session, create_engine
 # Python
@@ -19,7 +19,7 @@ DATABASE_URL = f'sqlite:///{os.path.join(BASE_DIR,SQLITE_FILENAME)}'
 engine = create_engine(DATABASE_URL, echo = False)         
 
 def create_db_table():
-    SQLModel.metadata.create_all(engine)
+    MyModels.metadata.create_all(engine)
 
 def get_session():
     with Session(engine) as session:

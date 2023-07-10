@@ -4,7 +4,8 @@ import pytest
 from fastapi import status
 from fastapi.testclient import TestClient
 # APP
-from app.models.user import SQLModel,User, UserBase, UserFB, UserUpdate
+from app.models import MyModels
+from app.models.user import User, UserBase, UserFB, UserUpdate
 from app.security.secureuser import get_password_hash
 from app.DB.db import get_session
 from app.DB.querys import add_user_to_db
@@ -20,7 +21,7 @@ TEST_SQLITE_FILENAME = 'test_DB.sqlite'
 BASE_DIR = os.path.dirname(os.path.realpath(__file__))
 DATABASE_URL = f'sqlite:///{os.path.join(BASE_DIR,TEST_SQLITE_FILENAME)}' 
 test_engine = create_engine(DATABASE_URL, echo = False)
-SQLModel.metadata.create_all(test_engine)
+MyModels.metadata.create_all(test_engine)
 
 def delete_db_file():
     os.remove(os.path.join(BASE_DIR, TEST_SQLITE_FILENAME))
@@ -33,8 +34,8 @@ app.dependency_overrides[get_session] = get_test_session
 
 @pytest.fixture(scope="function")
 def client() -> TestClient:
-    SQLModel.metadata.drop_all(test_engine)
-    SQLModel.metadata.create_all(test_engine)
+    MyModels.metadata.drop_all(test_engine)
+    MyModels.metadata.create_all(test_engine)
     return TestClient(app)
 
 @pytest.fixture()

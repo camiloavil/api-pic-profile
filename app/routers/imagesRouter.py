@@ -7,6 +7,7 @@ from ProfilePicMaker.app.models.pictures import BigPic
 from ProfilePicMaker.app.models.colors import Color, ColorExamples
 # APP
 from app.models.user import User
+from app.models.picture import Picture
 from app.security.secureuser import get_current_user
 # Python
 from typing import Annotated, Union
@@ -91,6 +92,8 @@ async def get_my_picture(current_user: Annotated[User, Depends(get_current_user)
                          index: int = Query(description='Which face in the picture will be used',
                                        default=1, 
                                        ge=1, le=10), 
+                         quality: int = Query(description='Quality to use, Default = Preview',
+                                       default=1),
                          colorA: ColorExamples = Query(description='First Color to use, Default = Black',
                                                   default=ColorExamples.BLACK),
                          colorB: ColorExamples = Query(description='Last Color to use, Default = Black',
@@ -98,23 +101,23 @@ async def get_my_picture(current_user: Annotated[User, Depends(get_current_user)
                          border: Annotated[Union[ColorExamples, None], 
                                       Query(description='Border Color to use, Default = None')] = None
                         ):
-    # if pic_file.content_type not in ["image/jpeg", "image/png"]:
+    print(current_user)
+    if current_user.is_active is False:
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, 
+                            detail="User disabled, please contact admin")
     if pic_file.content_type not in ("image/jpeg",):
         raise HTTPException(
             status_code=status.HTTP_415_UNSUPPORTED_MEDIA_TYPE,
             detail="Unsupported content type. Supported content types are 'image/jpeg'",
             )
-    if pic_file.size > 1024 * 1024 * 3:     # 3MB
+    if pic_file.size > 1024 * 1024 * 15:     # 15MB
         raise HTTPException(
             status_code=status.HTTP_413_REQUEST_ENTITY_TOO_LARGE,
             detail="File size is too large",
         )
-    # temp_dir = tempfile.TemporaryDirectory()
-    # colorborder: Annotated[str, typer.Option(help="Color to use for the border, Default = None")] = None
     Acolor = Color.get_color_rgb(colorA.value)
     Bcolor = Color.get_color_rgb(colorB.value)
     BorderColor = None if border is None else Color.get_color_rgb(border.value)
-    # print(str(BorderColor))
     try:
         # Create a temporary file
         with tempfile.NamedTemporaryFile(delete=True, suffix=".jpg") as temp_file:
@@ -130,7 +133,7 @@ async def get_my_picture(current_user: Annotated[User, Depends(get_current_user)
                     )
             # print(len(faces))
             index -= 1
-            faces[index].resize(300)
+            # faces[index].resize(300)
             faces[index].removeBG()
             faces[index].addBG(Acolor,Bcolor)
             faces[index].set_contour()

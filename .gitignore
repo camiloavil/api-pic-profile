@@ -6,7 +6,7 @@ env/
 # Archivos generados por Python
 *.pyc
 __pycache__/
-__init__.py 
+# __init__.py 
 
 # Archivos de registro
 *.log
@@ -24,3 +24,11 @@ __init__.py
 
 # Carpeta de configuración de VSCode
 .vscode/
+
+# Archivos de configuración de VSCode
+.vscode/settings.json
+.vscode/tasks.json
+.vscode
+
+# pytest
+.pytest_cache/

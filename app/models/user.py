@@ -1,19 +1,21 @@
 # SQLModel
-from sqlmodel import SQLModel, Field
+# from sqlmodel import SQLModel as models
+from . import MyModels
+from sqlmodel import Field
 # Python
 from uuid import UUID, uuid4
 from typing import Optional
 from datetime import datetime
 from pydantic import SecretStr, EmailStr
 
-class UserBase(SQLModel):
+class UserBase(MyModels):
     name  : str = Field(min_length=3, max_length=50)
     email : EmailStr = Field(unique=True)
     city : Optional[str] = Field(default= None, min_length=3, max_length=50)
     country : Optional[str] = Field(default= None, min_length=3, max_length=50)
 
 class User(UserBase, table=True):
-    user_id : UUID = Field(default_factory=uuid4,
+    id : UUID = Field(default_factory=uuid4,
                            primary_key=True,
                            index=True,
                            nullable=False)
@@ -23,8 +25,8 @@ class User(UserBase, table=True):
                                 nullable=False)
     userType : str = Field(default='free',
                            nullable=False)
+    pass_hash : str = Field(nullable=False)
     idTelegram : Optional[int] = None
-    pass_hash : str 
 
 class UserCreate(UserBase):
     password : SecretStr = Field(min_length=8, max_length=50)
@@ -40,7 +42,7 @@ class UserCreate(UserBase):
         }
 
 class UserFB(UserBase):
-    user_id : UUID
+    id : UUID
     initDate : datetime
     userType : str 
     class Config:
@@ -54,7 +56,7 @@ class UserFB(UserBase):
             }
         }
 
-class UserUpdate(SQLModel):
+class UserUpdate(MyModels):
     name  : Optional[str] = Field(min_length=3, max_length=50) 
     country : Optional[str] = Field(default= None, min_length=3, max_length=50)
     city  : Optional[str] = Field(default= None, min_length=3, max_length=50)

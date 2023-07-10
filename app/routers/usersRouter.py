@@ -78,7 +78,7 @@ def update_user(current_user: Annotated[User, Depends(get_current_user)],
         A dictionary containing the updated user information.
     """
     newData_dict = newData.dict(exclude_unset=True)
-    user_db = session.get(User,current_user.user_id)
+    user_db = session.get(User,current_user.id)
     for key, value in newData_dict.items():
         # print(f'key:{key} value:{value}')
         setattr(user_db,key,value)
@@ -103,10 +103,10 @@ def disable_user(current_user: Annotated[User, Depends(get_current_user)],
     Returns:
         dict: A JSON response containing a message indicating the user was deleted, and a 200 HTTP status code.
     """
-    user_db = session.get(User, current_user.user_id)
+    user_db = session.get(User, current_user.id)
     setattr(user_db,'is_active',False)
     session.commit()
-    return JSONResponse(content={'message':f'User id:{str(current_user.user_id)} disabled'},status_code=status.HTTP_200_OK)
+    return JSONResponse(content={'message':f'User id:{str(current_user.id)} disabled'},status_code=status.HTTP_200_OK)
 
 @router.put(path='/myuser/changepassword', 
             response_model= dict,
@@ -131,12 +131,12 @@ def update_password_user(current_user: Annotated[User, Depends(get_current_user)
     """
     if (verify_password(actual_password.get_secret_value(), current_user.pass_hash)):
         try:
-            user_db = session.get(User,current_user.user_id)
+            user_db = session.get(User,current_user.id)
             setattr(user_db,'pass_hash',get_password_hash(new_password.get_secret_value()))
             session.add(user_db)
             session.commit()
             session.refresh(user_db)
-            return JSONResponse(content={'message':f'User id:{str(current_user.user_id)} password updated'},
+            return JSONResponse(content={'message':f'User id:{str(current_user.id)} password updated'},
                                 status_code=status.HTTP_200_OK)
         except IntegrityError:
             raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="There is an error updating the password")
