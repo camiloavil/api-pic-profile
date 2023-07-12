@@ -21,7 +21,7 @@ router = APIRouter()
             response_model= List[UserFB], 
             status_code=status.HTTP_200_OK
             )
-def get_users(current_user: Annotated[User, Depends(get_current_user)],
+async def get_users(current_user: Annotated[User, Depends(get_current_user)],
             #   offset: int = Query(description='Offset of the query',default=1,ge=1),
               limit: int = Query(description='Limit of data per request',default=100, lte=100), 
               session: Session = Depends(get_session)) -> dict:
@@ -51,7 +51,7 @@ def get_users(current_user: Annotated[User, Depends(get_current_user)],
             response_model=UserFB, 
             status_code=status.HTTP_200_OK
             )
-def getUserbyEmail(current_user: Annotated[User, Depends(get_current_user)],
+async def getUserbyEmail(current_user: Annotated[User, Depends(get_current_user)],
                    email: EmailStr = Path(description='e-mail of the user to get', 
                                           example='user@example.com'), 
                    session: Session = Depends(get_session)) -> User:
@@ -86,7 +86,7 @@ def getUserbyEmail(current_user: Annotated[User, Depends(get_current_user)],
 @router.get(path='/getuser/{uuid}', 
             response_model=UserFB, 
             status_code=status.HTTP_200_OK)
-def getUserbyUUID(current_user: Annotated[User, Depends(get_current_user)],
+async def getUserbyUUID(current_user: Annotated[User, Depends(get_current_user)],
                   uuid: UUID = Path(description='UUID of the user to get'), 
                   session: Session = Depends(get_session)) -> User:
     """
@@ -117,7 +117,7 @@ def getUserbyUUID(current_user: Annotated[User, Depends(get_current_user)],
 @router.delete(path='/deluser/{uuid}',
                response_model=dict,
                status_code=status.HTTP_200_OK)
-def delete_user(current_user: Annotated[User, Depends(get_current_user)],
+async def delete_user(current_user: Annotated[User, Depends(get_current_user)],
                 uuid: UUID = Path(description="User ID to delete"),
                 session: Session = Depends(get_session)) -> dict:
     
