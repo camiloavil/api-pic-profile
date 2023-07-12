@@ -1,15 +1,18 @@
 # FastAPI
-from fastapi import APIRouter, status, HTTPException, UploadFile
+from fastapi import APIRouter, status, HTTPException, UploadFile, Request
 from fastapi import File, Query, Depends
 from fastapi.responses import FileResponse
 # ProfilePicMaker
 from ProfilePicMaker.app.models.colors import Color, ColorExamples
 # APP
 from app.models.user import User
+from app.DB.db import get_session
 from app.dependencies.service import QualityType
 from app.dependencies.service import MakePicture
 from app.security.secureuser import get_current_user
 from app.dependencies.service import NoFaceException
+# SQLModel
+from sqlmodel import Session
 # Python
 from typing import Annotated, Union
 
@@ -22,17 +25,17 @@ LIMIT_SIZE_USER = 15 # MB
 @router.post('/example',
              response_class=FileResponse, 
              status_code=status.HTTP_201_CREATED)
-async def example(pic_file: UploadFile = File(...),
-                    index: int = Query(description='Which face in the picture will be used',
-                                        default=1, 
-                                        ge=1, le=10), 
-                    colorA: ColorExamples = Query(description='First Color to use, Default = Black',
+async def example(request: Request, 
+                  pic_file: UploadFile = File(...),
+                  index: int = Query(description='Which face in the picture will be used',
+                                     default=1, ge=1, le=10),
+                  colorA: ColorExamples = Query(description='First Color to use, Default = Black',
                                                   default=ColorExamples.BLACK),
-                    colorB: ColorExamples = Query(description='Last Color to use, Default = Black',
+                  colorB: ColorExamples = Query(description='Last Color to use, Default = Black',
                                                   default=ColorExamples.WHITE),
-                    border: Annotated[Union[ColorExamples, None], 
-                                      Query(description='Border Color to use, Default = None')] = None
-                     ):
+                  border: Annotated[Union[ColorExamples, None], 
+                                    Query(description='Border Color to use, Default = None')] = None,
+                ):
     """
     Create a Example picture with specified colors and border.
 
@@ -52,6 +55,7 @@ async def example(pic_file: UploadFile = File(...),
     if pic_file.size > 1024 * 1024 * LIMIT_SIZE_FREE:     # 3MB
         raise HTTPException(status_code=status.HTTP_413_REQUEST_ENTITY_TOO_LARGE,
                             detail=f'File size is too large, the limit is {LIMIT_SIZE_FREE}MB',)
+    print(f'Ip address: {request.client.host}')
     Acolor = Color.get_color_rgb(colorA.value)
     Bcolor = Color.get_color_rgb(colorB.value)
     BorderColor = None if border is None else Color.get_color_rgb(border.value)
@@ -74,6 +78,7 @@ async def example(pic_file: UploadFile = File(...),
     response_class=FileResponse, 
     status_code=status.HTTP_201_CREATED)
 async def get_my_picture(current_user: Annotated[User, Depends(get_current_user)], 
+                         session: Session = Depends(get_session),
                          pic_file: UploadFile = File(...),
                          index: int = Query(description='Which face in the picture will be used',
                                        default=1, 
@@ -85,7 +90,7 @@ async def get_my_picture(current_user: Annotated[User, Depends(get_current_user)
                          colorB: ColorExamples = Query(description='Last Color to use, Default = Black',
                                                   default=ColorExamples.WHITE),
                          border: Annotated[Union[ColorExamples, None], 
-                                            Query(description='Border Color to use, Default = None')] = None
+                                            Query(description='Border Color to use, Default = None')] = None,
                         ):
     """
     Endpoint to get a user's picture.
@@ -129,7 +134,8 @@ async def get_my_picture(current_user: Annotated[User, Depends(get_current_user)
     BorderColor = None if border is None else Color.get_color_rgb(border.value)
 
     try:
-        pic_path = await newPicture.make_user_picture(pic_file=pic_file, 
+        pic_path = await newPicture.make_user_picture(session=session,
+                                                      pic_file=pic_file, 
                                                       Acolor=Acolor, 
                                                       Bcolor=Bcolor, 
                                                       BorderColor=BorderColor, 

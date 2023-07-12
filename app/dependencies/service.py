@@ -1,34 +1,33 @@
 # FastAPI
 from fastapi import File
 #APP
-from app.models.user import User
+from app.DB.db import BASE_DIR
+from app.models.picture import QualityType
 from app.models.picture import Picture
+from app.models.user import User
+# SQLModel
+from sqlmodel import Session
 # ProfilePicMaker
 from ProfilePicMaker.app.models.pictures import BigPic
 from ProfilePicMaker.app.models.colors import Color
 # Python 
 from typing import Optional
-from enum import Enum
 import tempfile
+import shutil
+import os
 
-TEMPORARY_DURATION = 5
+TEMPORARY_DURATION = 5 #Seconds
 
 class NoFaceException(Exception):
     def __init__(self, message: str) -> None:
         self.message = message
-
-class QualityType(str, Enum):
-    THUMBNAIL = 'thumbnail'
-    PREVIEW = 'preview'
-    MEDIUM = 'medium'
-    HIGH = 'high'
-    FULLSIZE = 'fullsize'
 
 class MakePicture:
     def __init__(self,user : User) -> None:
         self.user = user
 
     async def make_user_picture(self, 
+                                session : Session,
                                 pic_file : File, 
                                 Acolor : Color, 
                                 Bcolor : Color, 
@@ -37,6 +36,42 @@ class MakePicture:
                                 index : Optional[int] = 0) -> str:
         print('lets create a picture for a user') 
         print(self.user)
+        print(self.user.id)
+        user_path_directory = os.path.join(os.path.dirname(BASE_DIR),
+                                           'resources',
+                                           str(self.user.id))
+        print(f'user_path_directory: {user_path_directory}')
+        # check if the user has a folder_user if not create it whit id of user
+        # if not os.path.exists(user_path_directory):
+        os.makedirs(user_path_directory, exist_ok=True)
+
+        # make the pic and save it into the folder whit the user idname
+        pic_file = await MakePicture.make_temp_picture(pic_file = pic_file,
+                                                    Acolor = Acolor, 
+                                                    Bcolor = Bcolor, 
+                                                    BorderColor = BorderColor, 
+                                                    quality = quality, 
+                                                    index = index,
+                                                    temp = False)
+        sequence = 0
+        pic_file_parts = os.path.splitext(os.path.basename(pic_file))
+        new_pic_path = os.path.join(user_path_directory, 
+                                    f"{pic_file_parts[0]}_{quality}_{sequence}{pic_file_parts[1]}")
+        shutil.move(pic_file, new_pic_path)
+        # create db log of the picture
+        pictureDB = Picture(user_id=self.user.id, type_picture=quality)
+        try:
+            session.add(pictureDB)
+            session.commit()
+            session.refresh(pictureDB)
+        # except IntegrityError:
+        #     raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="User already exists")
+        except Exception as e:
+            print("Error Creating Picture DB:"+str(e))
+            raise Exception("there was an error saving Picture data into DB. Try again later")
+            # raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Internal Error")
+
+        return new_pic_path
     
     @staticmethod
     async def make_temp_picture(pic_file : File, 
@@ -44,7 +79,8 @@ class MakePicture:
                                 Bcolor : Color, 
                                 BorderColor : Optional[Color] = None,
                                 quality : Optional[QualityType] = QualityType.PREVIEW,
-                                index : Optional[int] = 0) -> str:
+                                index : Optional[int] = 0,
+                                temp : bool = True) -> str:
         """
         Creates a temporary picture with the specified parameters.
 
@@ -74,7 +110,7 @@ class MakePicture:
             elif quality == QualityType.MEDIUM:
                 faces[index].resize(600)
             elif quality == QualityType.HIGH:
-                faces[index].resize(100)
+                faces[index].resize(1000)
 
             faces[index].removeBG()
             faces[index].addBG(Acolor,Bcolor)
@@ -82,5 +118,8 @@ class MakePicture:
             if BorderColor is not None:
                 faces[index].setBorder(BorderColor)
             faces[index].setBlur(30)
-            faces[index].save(tol= TEMPORARY_DURATION)       # save the pic on a temp file during 5 sec
+            if temp:
+                faces[index].save(tol= TEMPORARY_DURATION)       # save the pic on a temp file during 5 sec
+            else:
+                faces[index].save()
             return faces[index].get_path()
