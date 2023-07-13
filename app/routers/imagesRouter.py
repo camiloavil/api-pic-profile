@@ -1,6 +1,6 @@
 # FastAPI
 from fastapi import APIRouter, status, HTTPException, UploadFile, Request
-from fastapi import File, Query, Depends
+from fastapi import Query, Depends
 from fastapi.responses import FileResponse
 # ProfilePicMaker
 from ProfilePicMaker.app.models.colors import Color, ColorExamples
@@ -26,7 +26,7 @@ LIMIT_SIZE_USER = 15 # MB
              response_class=FileResponse, 
              status_code=status.HTTP_201_CREATED)
 async def example(request: Request, 
-                  pic_file: UploadFile = File(...),
+                  picture_file: UploadFile,
                   index: int = Query(description='Which face in the picture will be used',
                                      default=1, ge=1, le=10),
                   colorA: ColorExamples = Query(description='First Color to use, Default = Black',
@@ -40,7 +40,7 @@ async def example(request: Request,
     Create a Example picture with specified colors and border.
 
     Parameters:
-        pic_file (UploadFile): The picture file to process.
+        picture_file (UploadFile): The picture file to process.
         index (int): Which face in the picture will be used. Default is 1. Must be between 1 and 10.
         colorA (ColorExamples): First color to use. Default is Black.
         colorB (ColorExamples): Last color to use. Default is Black.
@@ -49,10 +49,10 @@ async def example(request: Request,
     Returns:
         FileResponse: The processed picture file resized.
     """
-    if pic_file.content_type not in ("image/jpeg",):
+    if picture_file.content_type not in ("image/jpeg",):
         raise HTTPException(status_code=status.HTTP_415_UNSUPPORTED_MEDIA_TYPE,
                             detail="Unsupported content type. Supported content types are 'image/jpeg'",)
-    if pic_file.size > 1024 * 1024 * LIMIT_SIZE_FREE:     # 3MB
+    if picture_file.size > 1024 * 1024 * LIMIT_SIZE_FREE:     # 3MB
         raise HTTPException(status_code=status.HTTP_413_REQUEST_ENTITY_TOO_LARGE,
                             detail=f'File size is too large, the limit is {LIMIT_SIZE_FREE}MB',)
     print(f'Ip address: {request.client.host}')
@@ -60,7 +60,7 @@ async def example(request: Request,
     Bcolor = Color.get_color_rgb(colorB.value)
     BorderColor = None if border is None else Color.get_color_rgb(border.value)
     try:
-        pic_path = await MakePicture.make_temp_picture(pic_file=pic_file, 
+        pic_path = await MakePicture.make_temp_picture(pic_file=picture_file, 
                                                        Acolor=Acolor, 
                                                        Bcolor=Bcolor, 
                                                        BorderColor=BorderColor, 
@@ -78,8 +78,8 @@ async def example(request: Request,
     response_class=FileResponse, 
     status_code=status.HTTP_201_CREATED)
 async def get_my_picture(current_user: Annotated[User, Depends(get_current_user)], 
+                         pic_file: UploadFile,
                          session: Session = Depends(get_session),
-                         pic_file: UploadFile = File(...),
                          index: int = Query(description='Which face in the picture will be used',
                                        default=1, 
                                        ge=1, le=10), 

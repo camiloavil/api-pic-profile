@@ -18,7 +18,7 @@ router = APIRouter()
 @router.post(path='/newuser', 
                    response_model=UserFB, 
                    status_code=status.HTTP_201_CREATED)
-def create_user(user: UserCreate = Body(), 
+async def create_user(user: UserCreate = Body(), 
                 session: Session = Depends(get_session)) -> dict:
     """
     Creates a new user and adds it to the database. Accepts a user object as a Body parameter in the request. 
@@ -60,11 +60,10 @@ async def info_User(current_user: Annotated[User, Depends(get_current_user)]):
     """
     return UserFB(**current_user.dict())
 
-# @router.put(path='/myuser/{id}', tags=['users'],response_model=ResponseModel, status_code=status.HTTP_200_OK)
 @router.put(path='/myuser', 
                   response_model= UserFB, 
                   status_code=status.HTTP_200_OK)
-def update_user(current_user: Annotated[User, Depends(get_current_user)],
+async def update_user(current_user: Annotated[User, Depends(get_current_user)],
                 newData: UserUpdate = Body(),
                 session: Session = Depends(get_session)) -> dict:
     """
@@ -91,7 +90,7 @@ def update_user(current_user: Annotated[User, Depends(get_current_user)],
 @router.delete(path='/myuser',
                response_model=dict,
                status_code=status.HTTP_200_OK)
-def disable_user(current_user: Annotated[User, Depends(get_current_user)],
+async def disable_user(current_user: Annotated[User, Depends(get_current_user)],
                 session: Session = Depends(get_session)) -> dict:
     """
     Deletes a user from the database by setting their 'is_active' attribute to False.
@@ -111,7 +110,7 @@ def disable_user(current_user: Annotated[User, Depends(get_current_user)],
 @router.put(path='/myuser/changepassword', 
             response_model= dict,
             status_code=status.HTTP_200_OK)
-def update_password_user(current_user: Annotated[User, Depends(get_current_user)],
+async def update_password_user(current_user: Annotated[User, Depends(get_current_user)],
                          actual_password: SecretStr = Form(min_length=8, max_length=35),
                          new_password: SecretStr = Form(min_length=8, max_length=35),
                          session: Session = Depends(get_session)) -> dict:

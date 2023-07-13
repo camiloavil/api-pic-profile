@@ -53,7 +53,8 @@ async def get_users(current_user: Annotated[User, Depends(get_current_user)],
             )
 async def getUserbyEmail(current_user: Annotated[User, Depends(get_current_user)],
                    email: EmailStr = Path(description='e-mail of the user to get', 
-                                          example='user@example.com'), 
+                                          examples='user@example.com'),
+                                        #   example='user@example.com'),
                    session: Session = Depends(get_session)) -> User:
     """
     Retrieves a user from the database based on their email address.
