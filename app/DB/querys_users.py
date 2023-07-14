@@ -1,11 +1,8 @@
 # APP
 from app.models.user import User
-from app.DB.db import get_session
-from app.DB.db import engine
 # SQLModel
 from sqlmodel import Session, select
 from sqlalchemy.exc import IntegrityError
-from fastapi import Depends
 
 def add_user_to_db(user: User,session: Session):
     """
