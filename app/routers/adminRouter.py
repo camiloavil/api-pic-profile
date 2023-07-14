@@ -12,7 +12,7 @@ from uuid import UUID
 # APP
 from app.models.user import User, UserFB
 from app.DB.db import get_session
-from app.DB.querys import get_userDB_by_email
+from app.DB.querys_users import get_userDB_by_email
 from app.security.secureuser import get_current_user
 
 router = APIRouter()

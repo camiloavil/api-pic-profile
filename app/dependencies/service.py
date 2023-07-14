@@ -2,8 +2,8 @@
 from fastapi import File
 #APP
 from app.DB.db import BASE_DIR
-from app.models.picture import QualityType
-from app.models.picture import Picture
+from app.DB.querys_pictures import PictureDB
+from app.models.picture import Picture, Free_picture, QualityType, FreeQualityType
 from app.models.user import User
 # SQLModel
 from sqlmodel import Session
@@ -27,7 +27,7 @@ class MakePicture:
         self.user = user
 
     async def make_user_picture(self, 
-                                session : Session,
+                                db : Session,
                                 pic_file : File, 
                                 Acolor : Color, 
                                 Bcolor : Color, 
@@ -55,22 +55,15 @@ class MakePicture:
                                                     temp = False)
         sequence = 0
         pic_file_parts = os.path.splitext(os.path.basename(pic_file))
-        new_pic_path = os.path.join(user_path_directory, 
-                                    f"{pic_file_parts[0]}_{quality}_{sequence}{pic_file_parts[1]}")
+        pic_filename = f"{pic_file_parts[0]}_{quality}_{sequence}{pic_file_parts[1]}"
+        new_pic_path = os.path.join(user_path_directory, pic_filename)
         shutil.move(pic_file, new_pic_path)
         # create db log of the picture
-        pictureDB = Picture(user_id=self.user.id, type_picture=quality)
-        try:
-            session.add(pictureDB)
-            session.commit()
-            session.refresh(pictureDB)
-        # except IntegrityError:
-        #     raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="User already exists")
-        except Exception as e:
-            print("Error Creating Picture DB:"+str(e))
-            raise Exception("there was an error saving Picture data into DB. Try again later")
-            # raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Internal Error")
-
+        pictureDB = Picture(filename=pic_filename, 
+                            user_id=self.user.id, 
+                            type_picture=quality)
+        
+        PictureDB.add_picture_toDB(pictureDB, db)
         return new_pic_path
     
     @staticmethod
