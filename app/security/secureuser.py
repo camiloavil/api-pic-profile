@@ -13,7 +13,7 @@ from typing import Annotated, Union
 from datetime import datetime, timedelta
 # APP
 from app.security import URL_USER_LOGIN, SECRET_KEY, ALGORITHM, ACCESS_TOKEN_EXPIRE_MINUTES
-from app.DB.querys import get_userDB_by_email
+from app.DB.querys_users import get_userDB_by_email
 from app.DB.db import get_session
 
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
@@ -32,7 +32,8 @@ def verify_password(plain_password: str, hashed_password: str):
     :return: A boolean indicating if the plain password matches the hashed password.
     :rtype: bool
     """
-    return pwd_context.verify(plain_password.encode('utf-8'), hashed_password.encode('utf-8'))
+    return pwd_context.verify(plain_password.encode('utf-8'), 
+                              hashed_password.encode('utf-8'))
 
 def get_password_hash(password: str):
     """
@@ -46,7 +47,7 @@ def get_password_hash(password: str):
     """
     return pwd_context.hash(password.encode('utf-8'))
 
-def get_current_user(token: Annotated[str, Depends(oauth2_User_scheme)], 
+async def get_current_user(token: Annotated[str, Depends(oauth2_User_scheme)], 
                            session: Session = Depends(get_session)):
     """
     Asynchronously retrieves a user object from the database based on the provided bearer token.
@@ -96,7 +97,7 @@ def create_access_token(data: dict, expires_delta: Union[timedelta, None] = None
 @router.post(path="/"+URL_USER_LOGIN,
                   response_model=dict,
                   tags=["Users"])
-def login(form_data: Annotated[OAuth2PasswordRequestForm, Depends()],
+async def login(form_data: Annotated[OAuth2PasswordRequestForm, Depends()],
           session: Session = Depends(get_session)):
     """
     Authenticates a user by checking the validity of their provided credentials 
