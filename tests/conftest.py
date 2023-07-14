@@ -8,7 +8,7 @@ from app.models import MyModels
 from app.models.user import User, UserBase, UserFB, UserUpdate
 from app.security.secureuser import get_password_hash
 from app.DB.db import get_session
-from app.DB.querys import add_user_to_db
+from app.DB.querys_users import add_user_to_db
 # SQLModel
 from sqlmodel import Session, create_engine
 # Python
@@ -41,7 +41,7 @@ def client() -> TestClient:
     yield TestClient(app)
     delete_db_file()
 
-@pytest.fixture()
+@pytest.fixture(scope="class")
 def setUp_users():
     user1 = {
         "name": "Test user One",
