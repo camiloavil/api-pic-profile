@@ -15,6 +15,7 @@ from app.dependencies.service import NoFaceException
 # SQLModel
 from sqlmodel import Session
 # Python
+from pydantic.color import Color as ColorPy
 from typing import Annotated, Union
 from datetime import datetime
 
@@ -35,6 +36,7 @@ async def example(request: Request,
                                      default=1, ge=1, le=10),
                   quality: FreeQualityType = Query(description='Quality to use, Default = Preview',
                                                default=FreeQualityType.PREVIEW),
+                  colorTest: ColorPy = Query(description='Tsting Pydantic Color',),
                   colorA: ColorExamples = Query(description='First Color to use, Default = Black',
                                                   default=ColorExamples.BLACK),
                   colorB: ColorExamples = Query(description='Last Color to use, Default = Black',
@@ -56,6 +58,7 @@ async def example(request: Request,
         FileResponse: The processed picture file resized.
     """
     print(f'Ip address: {request.client.host}')
+    print(f'ColorTest: {str(colorTest.as_rgb())} StringColor {str(colorTest)}')
     nPics_ip = FreePictureDB.get_count_ip_date(ip=request.client.host, 
                                                date=datetime.now(), 
                                                db=db)
