@@ -3,7 +3,7 @@ from fastapi import APIRouter, status, HTTPException, UploadFile, Request
 from fastapi import Path, Query, Depends
 from fastapi.responses import FileResponse
 # ProfilePicMaker
-from ProfilePicMaker.app.models.colors import ColorExamples, Color as ColorPy
+from ProfilePicMaker.app.models.colors import ColorExamples_en
 # APP
 from app.models.user import User
 from app.models.picture import QualityType, FreeQualityType, Free_picture
@@ -45,15 +45,15 @@ async def example(
                     Query(description='Border Color to use, Default = None')] = None
     ):
     """
-    Endpoint for uploading an example picture.
+    Endpoint for uploading an example picture.  
 
-    Parameters:
-        - `quality` (FreeQualityType, Path): The quality to use.
-        - `index` (int, Query, optional): The index of the face in the picture to be used. Must be between 1 and 10. Defaults to 1.
-        - `colorCenter` (Color, Query, optional): The center color. The value could be RGB or HEX as per the CSS3 standard. Defaults to 'black'.
-        - `colorOuter` (Color, Query, optional): The outer color. The value could be RGB or HEX as per the CSS3 standard. Defaults to 'white'.
-        - `colorBorder` (Union[Color, None], Query, optional): The border color to use. Defaults to None.
-        - `picture_file` (UploadFile): The uploaded picture file.
+    Parameters:  
+        - `quality` (FreeQualityType, Path): The quality to use.  
+        - `index` (int, Query, optional): The index of the face in the picture to be used. Must be between 1 and 10. Defaults to 1.  
+        - `colorCenter` (Color, Query, optional): The center color. The value could be RGB or HEX as per the CSS3 standard. Defaults to 'black'.  
+        - `colorOuter` (Color, Query, optional): The outer color. The value could be RGB or HEX as per the CSS3 standard. Defaults to 'white'.  
+        - `colorBorder` (Union[Color, None], Query, optional): The border color to use. Defaults to None.  
+        - `picture_file` (UploadFile): The uploaded picture file.  
 
     Returns:
         - `FileResponse`: The response object containing the uploaded picture.
@@ -114,30 +114,7 @@ async def get_my_picture(
     colorBorder: Annotated[Union[Color, None], 
                             Query(description='Border Color to use, Default = None')] = None
     ):
-    """
-    Endpoint to get a user's picture.
     
-    This endpoint is used to get a user's picture. It requires authentication and supports file uploads. The user's picture can be customized with various options such as the desired face index, picture quality, color options, and border color.
-    
-    Parameters:
-        - current_user: The current authenticated user.
-        - pic_file: The uploaded picture file.
-        - index: The index of the face in the picture to be used (default: 1).
-        - quality: The quality to use for the picture (default: 1).
-        - colorA: The first color to use for customization (default: ColorExamples.BLACK).
-        - colorB: The last color to use for customization (default: ColorExamples.WHITE).
-        - border: The border color to use for customization (default: None).
-    
-    Returns:
-        - FileResponse: The response containing the user's customized picture.
-    
-    Raises:
-        - HTTPException(status_code=status.HTTP_401_UNAUTHORIZED): If the current user is not active.
-        - HTTPException(status_code=status.HTTP_415_UNSUPPORTED_MEDIA_TYPE): If the uploaded file is not in 'image/jpeg' format.
-        - HTTPException(status_code=status.HTTP_413_REQUEST_ENTITY_TOO_LARGE): If the uploaded file size exceeds 15MB.
-        - HTTPException(status_code=status.HTTP_409_CONFLICT): If there is no face detected in the uploaded picture.
-        - HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR): If there is an error processing the request.
-    """
     if current_user.is_active is False:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, 
                             detail="User disabled, please contact admin")

@@ -9,8 +9,8 @@ from app.models.user import User
 from sqlmodel import Session
 # ProfilePicMaker
 from ProfilePicMaker.app.models.pictures import BigPic
-from ProfilePicMaker.app.models.colors import Color
 # Python 
+from pydantic.color import Color
 from typing import Optional
 import tempfile
 import shutil
@@ -29,7 +29,7 @@ class MakePicture:
     async def make_user_picture(self, 
                                 db : Session,
                                 pic_file : File,
-                                colorsModel : tuple(Color),
+                                colorsModel : tuple[Color],
                                 BorderColor : Optional[Color] = None,
                                 quality : QualityType = QualityType.PREVIEW,
                                 index : Optional[int] = 0) -> str:
@@ -66,7 +66,7 @@ class MakePicture:
     
     @staticmethod
     async def make_temp_picture(pic_file : File, 
-                                colorsModel : tuple(Color),
+                                colorsModel : tuple[Color],
                                 BorderColor : Optional[Color] = None,
                                 quality : Optional[QualityType] = QualityType.PREVIEW,
                                 index : Optional[int] = 0,
