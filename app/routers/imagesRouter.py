@@ -1,12 +1,12 @@
 # FastAPI
 from fastapi import APIRouter, status, HTTPException, UploadFile, Request
-from fastapi import Query, Depends
+from fastapi import Path, Query, Depends
 from fastapi.responses import FileResponse
 # ProfilePicMaker
-from ProfilePicMaker.app.models.colors import Color, ColorExamples
+from ProfilePicMaker.app.models.colors import ColorExamples, Color as ColorPy
 # APP
 from app.models.user import User
-from app.models.picture import QualityType, FreeQualityType, Picture, Free_picture
+from app.models.picture import QualityType, FreeQualityType, Free_picture
 from app.DB.db import get_session
 from app.DB.querys_pictures import FreePictureDB
 from app.dependencies.service import MakePicture
@@ -15,7 +15,7 @@ from app.dependencies.service import NoFaceException
 # SQLModel
 from sqlmodel import Session
 # Python
-from pydantic.color import Color as ColorPy
+from pydantic.color import Color
 from typing import Annotated, Union
 from datetime import datetime
 
@@ -26,7 +26,8 @@ LIMIT_SIZE_USER = 15 # MB
 
 LIMIT_FREE_PICTURES = 6
 
-@router.post('/example',
+
+@router.post('/example/{quality}',
              response_class=FileResponse, 
              status_code=status.HTTP_201_CREATED)
 async def example(request: Request, 
@@ -34,15 +35,14 @@ async def example(request: Request,
                   db: Session = Depends(get_session),
                   index: int = Query(description='Which face in the picture will be used',
                                      default=1, ge=1, le=10),
-                  quality: FreeQualityType = Query(description='Quality to use, Default = Preview',
-                                               default=FreeQualityType.PREVIEW),
-                  colorTest: ColorPy = Query(description='Tsting Pydantic Color',),
-                  colorA: ColorExamples = Query(description='First Color to use, Default = Black',
-                                                  default=ColorExamples.BLACK),
-                  colorB: ColorExamples = Query(description='Last Color to use, Default = Black',
-                                                  default=ColorExamples.WHITE),
-                  border: Annotated[Union[ColorExamples, None], 
-                                    Query(description='Border Color to use, Default = None')] = None,
+                  quality: FreeQualityType = Path(description='Quality to use, Default = Thumbnail'),
+                                            #    default=FreeQualityType.PREVIEW),
+                  colorCenter: Color = Query(description='Testing Pydantic Color',
+                                               default='black'),
+                  colorOuter : Color = Query(description='Testing Pydantic Color',
+                                               default='white'),
+                  colorBorder: Annotated[Union[Color, None], 
+                                    Query(description='Border Color to use, Default = None')] = None
                 ):
     """
     Create a Example picture with specified colors and border.
@@ -58,14 +58,15 @@ async def example(request: Request,
         FileResponse: The processed picture file resized.
     """
     print(f'Ip address: {request.client.host}')
-    print(f'ColorTest: {str(colorTest.as_rgb())} StringColor {str(colorTest)}')
+    print(f'ColorTest: {str(colorCenter.as_rgb_tuple())} StringColor {str(colorCenter)}')
+    print(f'ColorTest: {str(colorOuter.as_rgb_tuple())} StringColor {str(colorOuter)}')
     nPics_ip = FreePictureDB.get_count_ip_date(ip=request.client.host, 
                                                date=datetime.now(), 
                                                db=db)
     print(f'Number of pictures: {nPics_ip}')
     if nPics_ip > LIMIT_FREE_PICTURES:
         raise HTTPException(status_code=status.HTTP_406_NOT_ACCEPTABLE,
-                            detail=f'You have reached the limit of {LIMIT_FREE_PICTURES} pictures by day. Please register your user to get unlimited pictures',)
+            detail=f'You have reached the limit of {LIMIT_FREE_PICTURES} pictures by day. Please register your user to get unlimited pictures',)
 
     if picture_file.content_type not in ("image/jpeg",):
         raise HTTPException(status_code=status.HTTP_415_UNSUPPORTED_MEDIA_TYPE,
@@ -73,14 +74,12 @@ async def example(request: Request,
     if picture_file.size > 1024 * 1024 * LIMIT_SIZE_FREE:     # 3MB
         raise HTTPException(status_code=status.HTTP_413_REQUEST_ENTITY_TOO_LARGE,
                             detail=f'File size is too large, the limit is {LIMIT_SIZE_FREE}MB',)
-    Acolor = Color.get_color_rgb(colorA.value)
-    Bcolor = Color.get_color_rgb(colorB.value)
-    BorderColor = None if border is None else Color.get_color_rgb(border.value)
+
     try:
         pic_path = await MakePicture.make_temp_picture(pic_file=picture_file, 
-                                                       Acolor=Acolor, 
-                                                       Bcolor=Bcolor, 
-                                                       BorderColor=BorderColor,
+                                                       colorsModel=(colorCenter, 
+                                                                    colorOuter),
+                                                       BorderColor=colorBorder,
                                                        quality=quality,
                                                        index=(index-1))
     except NoFaceException as e:

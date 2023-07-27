@@ -28,7 +28,8 @@ class MakePicture:
 
     async def make_user_picture(self, 
                                 db : Session,
-                                pic_file : File, 
+                                pic_file : File,
+                                colorsModel : list(Color),
                                 Acolor : Color, 
                                 Bcolor : Color, 
                                 BorderColor : Optional[Color] = None,
@@ -68,8 +69,7 @@ class MakePicture:
     
     @staticmethod
     async def make_temp_picture(pic_file : File, 
-                                Acolor : Color, 
-                                Bcolor : Color, 
+                                colorsModel : tuple(Color),
                                 BorderColor : Optional[Color] = None,
                                 quality : Optional[QualityType] = QualityType.PREVIEW,
                                 index : Optional[int] = 0,
@@ -88,7 +88,7 @@ class MakePicture:
         Returns:
             str: The path of the temporary picture.
         """
-
+        print(f'test Colors {colorsModel} {str(colorsModel[0])} {str(colorsModel[1])}')
         with tempfile.NamedTemporaryFile(delete=True, suffix=".jpg") as temp_file:
             with open(temp_file.name, "wb") as f:
                 f.write(await pic_file.read())
@@ -106,7 +106,8 @@ class MakePicture:
                 faces[index].resize(1000)
 
             faces[index].removeBG()
-            faces[index].addBG(Acolor,Bcolor)
+            # faces[index].addBG(Acolor,Bcolor)
+            faces[index].addBG(colorsModel)
             faces[index].set_contour()
             if BorderColor is not None:
                 faces[index].setBorder(BorderColor)

@@ -2,7 +2,6 @@
 from app.models.picture import Picture, Free_picture
 # SQLModel
 from sqlmodel import Session, select, func
-# from sqlalchemy.exc import IntegrityError
 # Python
 from datetime import datetime
 
