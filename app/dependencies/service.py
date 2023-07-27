@@ -29,9 +29,7 @@ class MakePicture:
     async def make_user_picture(self, 
                                 db : Session,
                                 pic_file : File,
-                                colorsModel : list(Color),
-                                Acolor : Color, 
-                                Bcolor : Color, 
+                                colorsModel : tuple(Color),
                                 BorderColor : Optional[Color] = None,
                                 quality : QualityType = QualityType.PREVIEW,
                                 index : Optional[int] = 0) -> str:
@@ -48,8 +46,7 @@ class MakePicture:
 
         # make the pic and save it into the folder whit the user idname
         pic_file = await MakePicture.make_temp_picture(pic_file = pic_file,
-                                                    Acolor = Acolor, 
-                                                    Bcolor = Bcolor, 
+                                                    colorsModel = colorsModel,
                                                     BorderColor = BorderColor, 
                                                     quality = quality, 
                                                     index = index,

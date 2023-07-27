@@ -30,33 +30,35 @@ LIMIT_FREE_PICTURES = 6
 @router.post('/example/{quality}',
              response_class=FileResponse, 
              status_code=status.HTTP_201_CREATED)
-async def example(request: Request, 
-                  picture_file: UploadFile,
-                  db: Session = Depends(get_session),
-                  index: int = Query(description='Which face in the picture will be used',
-                                     default=1, ge=1, le=10),
-                  quality: FreeQualityType = Path(description='Quality to use, Default = Thumbnail'),
-                                            #    default=FreeQualityType.PREVIEW),
-                  colorCenter: Color = Query(description='Testing Pydantic Color',
-                                               default='black'),
-                  colorOuter : Color = Query(description='Testing Pydantic Color',
-                                               default='white'),
-                  colorBorder: Annotated[Union[Color, None], 
-                                    Query(description='Border Color to use, Default = None')] = None
-                ):
+async def example(
+    request: Request, 
+    picture_file: UploadFile,
+    db: Session = Depends(get_session),
+    index: int = Query(description='Which face in the picture will be used',
+                        default=1, ge=1, le=10),
+    quality: FreeQualityType = Path(description='Quality to use'),
+    colorCenter: Color = Query(description='Center Color, the value could be RGB or HEX as CSS3 standard https://www.w3.org/TR/css-color-3/#svg-color',
+                                default='black'),
+    colorOuter : Color = Query(description='Outer Color, the value could be RGB or HEX as CSS3 standard https://www.w3.org/TR/css-color-3/#svg-color',
+                                default='white'),
+    colorBorder: Annotated[Union[Color, None], 
+                    Query(description='Border Color to use, Default = None')] = None
+    ):
     """
-    Create a Example picture with specified colors and border.
+    Endpoint for uploading an example picture.
 
     Parameters:
-        picture_file (UploadFile): The picture file to process.
-        index (int): Which face in the picture will be used. Default is 1. Must be between 1 and 10.
-        colorA (ColorExamples): First color to use. Default is Black.
-        colorB (ColorExamples): Last color to use. Default is Black.
-        border (Union[ColorExamples, None]): Border color to use. Default is None.
+        - `quality` (FreeQualityType, Path): The quality to use.
+        - `index` (int, Query, optional): The index of the face in the picture to be used. Must be between 1 and 10. Defaults to 1.
+        - `colorCenter` (Color, Query, optional): The center color. The value could be RGB or HEX as per the CSS3 standard. Defaults to 'black'.
+        - `colorOuter` (Color, Query, optional): The outer color. The value could be RGB or HEX as per the CSS3 standard. Defaults to 'white'.
+        - `colorBorder` (Union[Color, None], Query, optional): The border color to use. Defaults to None.
+        - `picture_file` (UploadFile): The uploaded picture file.
 
     Returns:
-        FileResponse: The processed picture file resized.
+        - `FileResponse`: The response object containing the uploaded picture.
     """
+
     print(f'Ip address: {request.client.host}')
     print(f'ColorTest: {str(colorCenter.as_rgb_tuple())} StringColor {str(colorCenter)}')
     print(f'ColorTest: {str(colorOuter.as_rgb_tuple())} StringColor {str(colorOuter)}')
@@ -94,24 +96,24 @@ async def example(request: Request,
                                       db=db)
     return FileResponse(pic_path)
 
-@router.post('/mypicture',
+@router.post('/mypicture/{quality}',
             response_class=FileResponse, 
             status_code=status.HTTP_201_CREATED)
-async def get_my_picture(current_user: Annotated[User, Depends(get_current_user)], 
-                         pic_file: UploadFile,
-                         db: Session = Depends(get_session),
-                         index: int = Query(description='Which face in the picture will be used',
-                                       default=1, 
-                                       ge=1, le=10), 
-                         quality: QualityType = Query(description='Quality to use, Default = Preview',
-                                       default=QualityType.PREVIEW),
-                         colorA: ColorExamples = Query(description='First Color to use, Default = Black',
-                                                  default=ColorExamples.BLACK),
-                         colorB: ColorExamples = Query(description='Last Color to use, Default = Black',
-                                                  default=ColorExamples.WHITE),
-                         border: Annotated[Union[ColorExamples, None], 
-                                            Query(description='Border Color to use, Default = None')] = None,
-                        ):
+async def get_my_picture(
+    current_user: Annotated[User, Depends(get_current_user)], 
+    pic_file: UploadFile,
+    db: Session = Depends(get_session),
+    index: int = Query(description='Which face in the picture will be used',
+                        default=1, 
+                        ge=1, le=10), 
+    quality: QualityType = Path(description='Quality to use'),
+    colorCenter: Color = Query(description='Center Color, the value could be RGB or HEX as CSS3 standard https://www.w3.org/TR/css-color-3/#svg-color',
+                                default='black'),
+    colorOuter : Color = Query(description='Outer Color, the value could be RGB or HEX as CSS3 standard https://www.w3.org/TR/css-color-3/#svg-color',
+                                default='white'),
+    colorBorder: Annotated[Union[Color, None], 
+                            Query(description='Border Color to use, Default = None')] = None
+    ):
     """
     Endpoint to get a user's picture.
     
@@ -149,18 +151,16 @@ async def get_my_picture(current_user: Annotated[User, Depends(get_current_user)
         )
     
     newPicture = MakePicture(current_user)
-    Acolor = Color.get_color_rgb(colorA.value)
-    Bcolor = Color.get_color_rgb(colorB.value)
-    BorderColor = None if border is None else Color.get_color_rgb(border.value)
 
     try:
-        pic_path = await newPicture.make_user_picture(session=db,
-                                                      pic_file=pic_file, 
-                                                      Acolor=Acolor, 
-                                                      Bcolor=Bcolor, 
-                                                      BorderColor=BorderColor, 
-                                                      quality=quality, 
-                                                      index=(index-1))
+        pic_path = await newPicture.make_user_picture(
+                                                    session=db,
+                                                    pic_file=pic_file, 
+                                                    colorsModel=(colorCenter, 
+                                                                colorOuter),
+                                                    BorderColor=colorBorder,
+                                                    quality=quality, 
+                                                    index=(index-1))
         return FileResponse(pic_path)
     except NoFaceException as e:
         raise HTTPException(status_code=status.HTTP_409_CONFLICT,
