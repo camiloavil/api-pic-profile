@@ -3,7 +3,7 @@ from fastapi import File
 #APP
 from app.DB.db import BASE_DIR
 from app.DB.querys_pictures import PictureDB
-from app.models.picture import Picture, Free_picture, QualityType, FreeQualityType
+from app.models.picture import Picture, QualityType
 from app.models.user import User
 # SQLModel
 from sqlmodel import Session

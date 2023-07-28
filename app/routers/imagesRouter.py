@@ -59,9 +59,6 @@ async def example(
         - `FileResponse`: The response object containing the uploaded picture.
     """
 
-    print(f'Ip address: {request.client.host}')
-    print(f'ColorTest: {str(colorCenter.as_rgb_tuple())} StringColor {str(colorCenter)}')
-    print(f'ColorTest: {str(colorOuter.as_rgb_tuple())} StringColor {str(colorOuter)}')
     nPics_ip = FreePictureDB.get_count_ip_date(ip=request.client.host, 
                                                date=datetime.now(), 
                                                db=db)
@@ -114,7 +111,20 @@ async def get_my_picture(
     colorBorder: Annotated[Union[Color, None], 
                             Query(description='Border Color to use, Default = None')] = None
     ):
-    
+    """
+    Endpoint for uploading an user picture.  
+
+    Parameters:  
+        - `quality` (FreeQualityType, Path): The quality to use.  
+        - `index` (int, Query, optional): The index of the face in the picture to be used. Must be between 1 and 10. Defaults to 1.  
+        - `colorCenter` (Color, Query, optional): The center color. The value could be RGB or HEX as per the CSS3 standard. Defaults to 'black'.  
+        - `colorOuter` (Color, Query, optional): The outer color. The value could be RGB or HEX as per the CSS3 standard. Defaults to 'white'.  
+        - `colorBorder` (Union[Color, None], Query, optional): The border color to use. Defaults to None.  
+        - `picture_file` (UploadFile): The uploaded picture file.  
+
+    Returns:
+        - `FileResponse`: The response object containing the uploaded picture.
+    """
     if current_user.is_active is False:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, 
                             detail="User disabled, please contact admin")

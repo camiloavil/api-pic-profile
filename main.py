@@ -1,23 +1,11 @@
 # FastAPI
 from fastapi import FastAPI
-from fastapi.responses import HTMLResponse
+from fastapi.responses import HTMLResponse,JSONResponse
 # APP
 from app.routers import imagesRouter, usersRouter, adminRouter
 from app.security import secureuser
 from app.DB.db import create_db_table
 # Python
-import sys
-import os
-# sys.path.append("ProfilePicMaker")
-
-# submod_path = os.path.abspath("ProfilePicMaker")
-# # Agregar la ruta del submódulo al PYTHONPATH
-# sys.path.append(submod_path)
-
-submodule_name = 'ProfilePicMaker'
-(parent_folder_path, current_dir) = os.path.split(os.path.dirname(__file__))
-sys.path.append(os.path.join(parent_folder_path, submodule_name))
-
 
 app = FastAPI()
 app.title = "Pic Profile Maker"
@@ -36,7 +24,7 @@ app.include_router(adminRouter.router,
 app.include_router(secureuser.router)
 
 @app.on_event('startup')
-def on_startup():
+async def on_startup():
     """
     Initializes the app on startup and creates a database table.
     :param: None
@@ -45,8 +33,24 @@ def on_startup():
     create_db_table()
 
 @app.get(path="/",tags=["Home"])
-def home():
+async def home():
     """
     Returns an HTMLResponse containing a h1 tag with the text "Pic Profile Maker".
     """
     return HTMLResponse('<h1>Pic Profile Maker</h1>')
+
+@app.get("/author/", tags=['Author'])
+async def made_by():
+    """
+    A function that returns the information of the author.
+
+    Parameters:
+        None
+
+    Returns:
+        A JSONResponse object containing the author's name and URL.
+    """
+    return JSONResponse({
+        "name": "Camilo Avila",
+        "url": "https://camiloavil.com",
+        })
