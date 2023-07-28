@@ -1,6 +1,7 @@
 # FastAPI
 from fastapi import FastAPI
 from fastapi.responses import HTMLResponse,JSONResponse
+from fastapi.middleware.cors import CORSMiddleware
 # APP
 from app.routers import imagesRouter, usersRouter, adminRouter
 from app.security import secureuser
@@ -11,6 +12,13 @@ app = FastAPI()
 app.title = "Pic Profile Maker"
 app.version = "0.1.0"
 
+app.add_middleware(
+    CORSMiddleware,
+    allow_credentials=True,
+    allow_origins=["*"],
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 app.include_router(usersRouter.router, 
                    prefix='/users',
