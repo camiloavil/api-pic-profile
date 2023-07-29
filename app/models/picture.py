@@ -16,6 +16,7 @@ class QualityType(str, Enum):
 class FreeQualityType(str, Enum):
     THUMBNAIL = 'thumbnail'
     PREVIEW = 'preview'
+    MEDIUM = 'medium'
 
 class Picture(MyModels, table=True):
     id: int = Field(primary_key=True)

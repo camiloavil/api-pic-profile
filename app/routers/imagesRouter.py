@@ -1,9 +1,7 @@
 # FastAPI
 from fastapi import APIRouter, status, HTTPException, UploadFile, Request
 from fastapi import Path, Query, Depends
-from fastapi.responses import FileResponse, StreamingResponse
-# ProfilePicMaker
-from ProfilePicMaker.app.models.colors import ColorExamples_en
+from fastapi.responses import FileResponse
 # APP
 from app.models.user import User
 from app.models.picture import QualityType, FreeQualityType, Free_picture
@@ -18,8 +16,6 @@ from sqlmodel import Session
 from pydantic.color import Color
 from typing import Annotated, Union
 from datetime import datetime
-
-import io
 
 router = APIRouter()
 
@@ -93,9 +89,11 @@ async def example(
     FreePictureDB.add_freePicture_toDB(Free_picture(ip=request.client.host, 
                                                     quality=quality),
                                       db=db)
-    # return FileResponse(pic_path, media_type="image/png")
-    # headers = {'Content-Disposition': 'attachment; filename=example.png'}
-    headers = {'Access-Control-Expose-Headers': 'Content-Disposition'}
+    
+    headers = {
+        'Access-Control-Expose-Headers': 'Content-Disposition',
+        'picMaker-pics-left-day': f'{LIMIT_FREE_PICTURES - nPics_ip}'
+        }
     return FileResponse(pic_path, headers=headers, media_type="image/png", filename='example.png')
 
 @router.post('/mypicture/{quality}',
@@ -154,9 +152,11 @@ async def get_my_picture(
                                                     quality=quality, 
                                                     index=(index-1))
         
-        headers = {'Access-Control-Expose-Headers': 'Content-Disposition'}
+        headers = {
+            'Access-Control-Expose-Headers': 'Content-Disposition',
+            'picMaker-pic-url': 'this will be the url of the picture on the Quality selected'
+        }
         return FileResponse(pic_path, headers=headers, media_type="image/png", filename='example.png')
-        return FileResponse(pic_path)
 
     except NoFaceException as e:
         raise HTTPException(status_code=status.HTTP_409_CONFLICT,
