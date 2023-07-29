@@ -1,7 +1,7 @@
 # FastAPI
 from fastapi import APIRouter, status, HTTPException, UploadFile, Request
 from fastapi import Path, Query, Depends
-from fastapi.responses import FileResponse
+from fastapi.responses import FileResponse, StreamingResponse
 # ProfilePicMaker
 from ProfilePicMaker.app.models.colors import ColorExamples_en
 # APP
@@ -19,10 +19,12 @@ from pydantic.color import Color
 from typing import Annotated, Union
 from datetime import datetime
 
+import io
+
 router = APIRouter()
 
-LIMIT_SIZE_FREE = 3 # MB
-LIMIT_SIZE_USER = 15 # MB
+LIMIT_SIZE_FREE = 15 # MB
+LIMIT_SIZE_USER = 30 # MB
 
 LIMIT_FREE_PICTURES = 60
 
@@ -91,7 +93,10 @@ async def example(
     FreePictureDB.add_freePicture_toDB(Free_picture(ip=request.client.host, 
                                                     quality=quality),
                                       db=db)
-    return FileResponse(pic_path)
+    # return FileResponse(pic_path, media_type="image/png")
+    # headers = {'Content-Disposition': 'attachment; filename=example.png'}
+    headers = {'Access-Control-Expose-Headers': 'Content-Disposition'}
+    return FileResponse(pic_path, headers=headers, media_type="image/png", filename='example.png')
 
 @router.post('/mypicture/{quality}',
             response_class=FileResponse, 
@@ -148,7 +153,11 @@ async def get_my_picture(
                                                     BorderColor=colorBorder,
                                                     quality=quality, 
                                                     index=(index-1))
+        
+        headers = {'Access-Control-Expose-Headers': 'Content-Disposition'}
+        return FileResponse(pic_path, headers=headers, media_type="image/png", filename='example.png')
         return FileResponse(pic_path)
+
     except NoFaceException as e:
         raise HTTPException(status_code=status.HTTP_409_CONFLICT,
                             detail= e.message,)
