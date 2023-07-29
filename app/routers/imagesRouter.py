@@ -24,7 +24,7 @@ router = APIRouter()
 LIMIT_SIZE_FREE = 3 # MB
 LIMIT_SIZE_USER = 15 # MB
 
-LIMIT_FREE_PICTURES = 6
+LIMIT_FREE_PICTURES = 60
 
 
 @router.post('/example/{quality}',
