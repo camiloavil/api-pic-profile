@@ -20,12 +20,12 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-app.include_router(usersRouter.router, 
-                   prefix='/users',
-                   tags=['Users'])
 app.include_router(imagesRouter.router,
                    prefix='/pictures',
                    tags=['Pictures'])   
+app.include_router(usersRouter.router, 
+                   prefix='/users',
+                   tags=['Users'])
 app.include_router(adminRouter.router,
                    prefix='/admin',
                    tags=['Admin'])
