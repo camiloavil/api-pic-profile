@@ -1,5 +1,5 @@
 # FastAPI
-from fastapi import File
+from fastapi import UploadFile
 # APP
 from app.DB.db import BASE_DIR
 from app.DB.querys_pictures import PictureDB
@@ -30,7 +30,7 @@ class MakePicture:
 
     async def make_user_picture(self,
                                 db: Session,
-                                pic_file: File,
+                                pic_file: UploadFile,
                                 colorsModel: tuple[Color],
                                 BorderColor: Optional[Color] = None,
                                 quality: QualityType = QualityType.PREVIEW,
@@ -67,7 +67,7 @@ class MakePicture:
         return new_pic_path
 
     @staticmethod
-    async def make_temp_picture(pic_file: File,
+    async def make_temp_picture(pic_file: UploadFile,
                                 colorsModel: tuple[Color],
                                 BorderColor: Optional[Color] = None,
                                 quality: Optional[QualityType] = QualityType.PREVIEW,
@@ -89,7 +89,9 @@ class MakePicture:
         """
         print(
             f'test Colors {colorsModel} {str(colorsModel[0])} {str(colorsModel[1])}')
-        with tempfile.NamedTemporaryFile(delete=True, suffix=".jpg") as temp_file:
+        suffix = '.'+pic_file.filename.split(".")[-1]
+        with tempfile.NamedTemporaryFile(delete=True,
+                                         suffix=suffix) as temp_file:
             with open(temp_file.name, "wb") as f:
                 f.write(await pic_file.read())
             faces = BigPic(temp_file.name).get_faces()
@@ -121,7 +123,7 @@ class MakePicture:
             return faces[index].get_path()
 
     @staticmethod
-    async def removeBG_picture(pic_file: File,
+    async def removeBG_picture(pic_file: UploadFile,
                                quality: Optional[QualityType] = QualityType.PREVIEW,
                                temp: bool = True) -> str:
         """
@@ -137,11 +139,13 @@ class MakePicture:
         Returns:
             str: The path of the output picture file.
         """
-        with tempfile.NamedTemporaryFile(delete=True, suffix=".jpg") as temp_file:
+        suffix = '.'+pic_file.filename.split(".")[-1]
+        with tempfile.NamedTemporaryFile(delete=True,
+                                         suffix=suffix) as temp_file:
             with open(temp_file.name, "wb") as f:
                 f.write(await pic_file.read())
 
-            face = FacePic(temp_file.name)
+            face = FacePic(path=temp_file.name)
 
             if quality == QualityType.THUMBNAIL:
                 face.resize(150)
@@ -153,12 +157,7 @@ class MakePicture:
                 face.resize(1000)
 
             face.removeBG()
-            # face.addBG(Acolor,Bcolor)
-            # face.addBG(colorsModel)
-            # face.set_contour()
-            # if BorderColor is not None:
-            # face.setBorder(BorderColor)
-            # face.setBlur(30)
+
             if temp:
                 # save the pic on a temp file during 5 sec
                 face.save(tol=TEMPORARY_DURATION)

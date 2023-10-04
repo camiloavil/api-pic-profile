@@ -1,5 +1,5 @@
 # FastAPI
-from fastapi import APIRouter, status, HTTPException, UploadFile, Request
+from fastapi import APIRouter, status, HTTPException, UploadFile, File, Request
 from fastapi import Path, Query, Depends
 from fastapi.responses import FileResponse
 # APP
@@ -7,9 +7,8 @@ from app.models.user import User
 from app.models.picture import QualityType, FreeQualityType, Free_picture
 from app.DB.db import get_session
 from app.DB.querys_pictures import FreePictureDB
-from app.dependencies.service import MakePicture
+from app.dependencies.service import MakePicture, NoFaceException
 from app.security.secureuser import get_current_user
-from app.dependencies.service import NoFaceException
 # SQLModel
 from sqlmodel import Session
 # Python
@@ -30,7 +29,7 @@ LIMIT_FREE_PICTURES = 60
              status_code=status.HTTP_201_CREATED)
 async def example(
     request: Request,
-    picture_file: UploadFile,
+    picture_file: Annotated[UploadFile, File(description='The uploaded picture file.')],
     db: Session = Depends(get_session),
     index: int = Query(description='Which face in the picture will be used',
                        default=1, ge=1, le=10),
@@ -168,7 +167,9 @@ async def get_my_picture(
                             detail="there was an error processing your request. Try again later",)
 
 
-@router.post('/removebg', response_class=FileResponse, status_code=status.HTTP_201_CREATED)
+@router.post('/removebg/{quality}',
+             response_class=FileResponse,
+             status_code=status.HTTP_201_CREATED)
 async def removeBG(
     request: Request,
     picture_file: UploadFile,
