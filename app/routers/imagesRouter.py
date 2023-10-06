@@ -220,7 +220,7 @@ async def removeBG(
                                                     quality=quality),
                                        db=db)
     headers = {
-        'Access-Control-Expose-Headers': 'Content-Disposition',
-        'picMaker-pics-left-day': f'{LIMIT_FREE_PICTURES - nPics_ip}'
+        'Access-Control-Expose-Headers': 'Content-Disposition, PicMaker-pics-left',
+        'PicMaker-pics-left': f'{(LIMIT_FREE_PICTURES - nPics_ip)}',
     }
     return FileResponse(pic_path, headers=headers, media_type="image/png", filename='response.png')
